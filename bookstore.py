@@ -3,13 +3,16 @@ import sqlite3
 db = sqlite3.connect('ebookstore')
 cursor = db.cursor()
 
-def enter():
+def row_print(row):
+    print('{0} : {1} : {2} : {3}'.format(row[0], row[1], row[2], row[3]))
+
+def add_new():
     new_title = input("Title:  ")
     new_author = input("Author:  ")
-    new_qty = input("Quantity:  ")
+    new_qty = int(input("Quantity:  "))
 
     while True:
-        new_id = input("Enter id:  ")
+        new_id = int(input("Enter id:  "))
         try:
             new_book = [new_id, new_title, new_author, new_qty]
             db.execute('''INSERT INTO books VALUES(?,?,?,?)''', new_book)
@@ -19,28 +22,50 @@ def enter():
             print("this id already is in database. Enter new id:")
             continue
 
+def update():
+    id = int(input("Enter id book's you want to update: "))
+    cursor.execute("""SELECT * FROM books WHERE id = ?""", (id, ))
+    for row in cursor:
+        row_print(row)
 
-"""def update():
-    menu = input(What do you want to update: 
-                 1 - id
-                 2 - title
-                 3 - author 
-                 4 - quantity)
-    view_all()
-    id_update = int(input("Enter the book's id you want to update: "))
-    title_update = input("Enter new title: ")
-"""       
+    id_update = int(input("Enter new id or -1 to skip: "))
+    if id_update == -1:
+        id_update = id
+
+    title_update = input("Enter new Title or -1 to skip: ")
+    if title_update == "-1":
+        pass
+    else:
+        cursor.execute("""UPDATE books SET Title = ? WHERE id = ?""", (title_update, id))
+        db.commit()
+
+    author_update = input("Enter new Author or -1 to skip: ")
+    if author_update == "-1":
+        pass
+    else:
+        cursor.execute("""UPDATE books SET Author = ? WHERE id = ?""", (author_update, id))
+        db.commit()
+
+    qty_update = input("Enter new Qty or -1 to skip: ")
+    if qty_update == -1:
+        pass
+    else:
+        cursor.execute("""UPDATE books SET Qty = ? WHERE id = ?""", (qty_update, id))
+        db.commit()
+
+    cursor.execute("""UPDATE books SET id = ? WHERE id = ?""", (id_update, id))
+    db.commit()
 
 def delete():
     view_all()
     id_delete_book = int(input("Enter id book's you want to delete: "))
-    cursor.execute("""SELECT id, Title, Author FROM bookshop WHERE id = ?""", (id_delete_book, ))
+    cursor.execute("""SELECT id, Title, Author FROM books WHERE id = ?""", (id_delete_book, ))
     for row in cursor:
-        sure = input(f"""Do you want to delete this book: 
+        sure = input(f"""Do you want to delete this book:
     {'{0} : {1} : {2}'.format(row[0], row[1], row[2])}
 y or n: """)
         if sure == "y":
-            print(f"""Book: 
+            print(f"""Book:
     {'{0} : {1} : {2}'.format(row[0], row[1], row[2])}
 has been successfully deleted""")            
             db.execute("""DELETE FROM books WHERE id = ?""", (id_delete_book, ))
@@ -49,7 +74,7 @@ has been successfully deleted""")
             print("Back to main menu")
 
 def search():
-    menu_search = input("""How would you search the book. 
+    menu_search = input("""How would you search the book.
     Enter the search parameters separated by commas:
     1 - id
     2 - title
@@ -62,25 +87,25 @@ def search():
         id_search = int(input("Enter book's id: "))
         cursor.execute("""SELECT * FROM books WHERE id = ? """, (id_search, ))
         for row in cursor:
-            print('{0} : {1} : {2} : {3}'.format(row[0], row[1], row[2], row[3]))
+            row_print(row)
 
     if "2" in search_parameters:
         title_search = input("Enter title: ")
         cursor.execute("""SELECT * FROM books WHERE Title LIKE '%?%' """, (title_search, ))
         for row in cursor:
-            print('{0} : {1} : {2} : {3}'.format(row[0], row[1], row[2], row[3]))
+            row_print(row)
 
     if "3" in search_parameters:
         author_search = input("Enter author: ")
         cursor.execute("""SELECT * FROM books WHERE Author = ? """, (author_search, ))
         for row in cursor:
-            print('{0} : {1} : {2} : {3}'.format(row[0], row[1], row[2], row[3]))
+            row_print(row)
 
 
 def view_all():
     cursor.execute('''SELECT * FROM books''')
     for row in cursor:
-        print('{0} : {1} : {2} : {3}'.format(row[0], row[1], row[2], row[3]))
+        row_print(row)
 
 
 cursor.execute('''
@@ -97,10 +122,8 @@ if row is None:
     cursor.executemany(''' INSERT INTO books(id, Title, Author, Qty) VALUES(?,?,?,?)''', books)
 db.commit()
 
-
-
 while True:
-    menu = input("""\nWhat do you intend to do:
+    main_menu = input("""\nMain menu:
     1 - Enter book
     2 - Update book
     3 - Delete book
@@ -109,22 +132,22 @@ while True:
     0 - Exit
     :  """)
 
-    if menu == "1":
-        enter()
+    if main_menu == "1":
+        add_new()
 
-    elif menu == "2":
-        print("2 Update")
+    elif main_menu == "2":
+        update()
 
-    elif menu == "3":
+    elif main_menu == "3":
         delete()
 
-    elif menu == "4":
+    elif main_menu == "4":
         search()
 
-    elif menu == "5":
+    elif main_menu == "5":
         view_all()
 
-    elif menu == "0":
+    elif main_menu == "0":
         break
 
     else:
